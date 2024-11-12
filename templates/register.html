@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+
+{% block title %}Register{% endblock %}
+
+{% block content %}
+<h2 style="color: #4CAF50; text-align: center;">Register</h2>
+
+<form action="{{ url_for('register') }}" method="post" style="max-width: 400px; margin: auto; background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);">
+    <div style="margin-bottom: 15px;">
+        <label for="email" style="display: block; font-weight: bold; color: #333;">Email:</label>
+        <input type="email" name="email" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label for="username" style="display: block; font-weight: bold; color: #333;">Username:</label>
+        <input type="text" name="username" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+    </div>
+    <div style="margin-bottom: 15px;">
+        <label for="password" style="display: block; font-weight: bold; color: #333;">Password:</label>
+        <input type="password" name="password" required style="width: 100%; padding: 8px; border-radius: 5px; border: 1px solid #ddd;">
+    </div>
+    <button type="submit" style="background-color: #4CAF50; color: white; border: none; padding: 10px; width: 100%; border-radius: 5px; cursor: pointer;">Register</button>
+</form>
+
+{% if error %}
+<p style="color: red; text-align: center; margin-top: 20px;">{{ error }}</p>
+{% endif %}
+{% endblock %}

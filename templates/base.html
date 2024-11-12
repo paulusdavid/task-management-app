@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}My Music App{% endblock %}</title>
+    <style>
+        /* General styling */
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+            color: #333;
+        }
+
+        /* Header and navigation */
+        header {
+            background-color: #333;
+            padding: 1rem;
+            color: white;
+            text-align: center;
+        }
+
+        nav ul {
+            list-style-type: none;
+            margin: 0;
+            padding: 0;
+            overflow: hidden;
+        }
+
+            nav ul li {
+                display: inline;
+                margin-right: 1rem;
+            }
+
+                nav ul li a {
+                    color: white;
+                    text-decoration: none;
+                    font-weight: bold;
+                }
+
+                    nav ul li a:hover {
+                        text-decoration: underline;
+                    }
+
+        /* Main content area */
+        main {
+            max-width: 800px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            color: #4CAF50;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 0px;
+            background-color: #333;
+            color: #fff;
+            position: fixed;
+            width: 100%;
+            bottom: 0;
+            overflow: hidden;
+        }
+
+        /* Lists styling */
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+
+            ul li {
+                margin-bottom: 1rem;
+                padding: 1rem;
+                border-bottom: 1px solid #ddd;
+            }
+
+                ul li strong {
+                    font-size: 1.1rem;
+                }
+
+        /* Button styling */
+        .btn {
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            padding: 0.5rem 1rem;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 1rem;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+            .btn:hover {
+                background-color: #45a049;
+            }
+
+        /* Image styling */
+        img {
+            border-radius: 8px;
+            margin-right: 1rem;
+        }
+    </style>
+</head>
+<body>
+
+    <!-- Header section with conditional User, Subscription, Query, and Logout links -->
+    <header>
+        <h1>Task Managmenet App</h1>
+        <nav style="background-color: #333; padding: 10px; text-align: center;">
+            <ul style="list-style: none; padding: 0; display: inline-block;">
+                {% if session.get('email') %}
+                <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('home') }}" style="color: white; text-decoration: none;">User</a></li>
+                <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('logout') }}" style="color: white; text-decoration: none;">Logout</a></li>
+                {% endif %}
+                <!-- Display user_name on the right side when logged in -->
+                {% if session.get('user_name') %}
+                <div style="position: absolute; right: 20px; color: white;">
+                    {{session['user_name'] }}
+                </div>
+                {% endif %}
+            </ul>
+        </nav>
+        
+    </header>
+
+    <!-- Main content area -->
+    <main>
+        {% block content %}
+        <!-- Page-specific content will go here -->
+        {% endblock %}
+    </main>
+
+    <!-- Footer section -->
+    <footer>
+        <p>&copy; 2024 My Music App by Paulus David (s3675333) <br> RMIT UNIVERSITY</p>
+    </footer>
+
+</body>
+</html>
