@@ -1,5 +1,6 @@
 from flask import Flask, request, render_template, redirect, url_for, session
 import boto3
+import json
 from botocore.exceptions import ClientError
 
 app = Flask(__name__)
@@ -8,6 +9,10 @@ app.secret_key = 'your_secret_key_here'
 # Configure AWS credentials and region
 dynamodb = boto3.resource('dynamodb', region_name='ap-southeast-2')  
 login_table = dynamodb.Table('login-taskmanagement-a3')
+
+# Initialize the Lambda client
+lambda_client = boto3.client('lambda', region_name='ap-southeast-2')
+
 
 @app.route('/')
 def index():
@@ -43,19 +48,27 @@ def register():
         username = request.form['username']
         password = request.form['password']
 
-        # Check if the email already exists in the DynamoDB table
-        response = login_table.get_item(Key={'email': email})
-        if 'Item' in response:
-            error = "The email already exists"
+        # Prepare payload for Lambda
+        payload = {
+            'email': email,
+            'username': username,
+            'password': password
+        }
+
+        # Invoke the Lambda function
+        response = lambda_client.invoke(
+            FunctionName='registerUser',  # Replace with your Lambda function name
+            InvocationType='RequestResponse',
+            Payload=json.dumps(payload)
+        )
+
+        # Process the Lambda response
+        result = json.loads(response['Payload'].read())
+        if result['statusCode'] == 200:
+            return redirect(url_for('login'))  # Redirect to login page on success
         else:
-            # Email is unique, insert new user information into DynamoDB
-            login_table.put_item(Item={
-                'email': email,
-                'user_name': username,
-                'password': password
-            })
-            return redirect(url_for('login'))  # Redirect to login page after registration
-    
+            error = json.loads(result['body'])  # Display error from Lambda
+
     return render_template('register.html', error=error)
 
 @app.route('/logout')
