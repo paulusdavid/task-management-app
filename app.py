@@ -1,6 +1,7 @@
-from flask import Flask, request, render_template, redirect, url_for, session
+from flask import Flask, request, render_template, redirect, url_for, session, flash
 import boto3
 import json
+import requests
 from botocore.exceptions import ClientError
 
 app = Flask(__name__)
@@ -12,7 +13,7 @@ login_table = dynamodb.Table('login-taskmanagement-a3')
 
 # Initialize the Lambda client
 lambda_client = boto3.client('lambda', region_name='ap-southeast-2')
-
+API_GATEWAY_URL = "https://6v6gcorg56.execute-api.ap-southeast-2.amazonaws.com/prod/register"
 
 @app.route('/')
 def index():
@@ -48,26 +49,22 @@ def register():
         username = request.form['username']
         password = request.form['password']
 
-        # Prepare payload for Lambda
+        # Create payload for the API request
         payload = {
-            'email': email,
-            'username': username,
-            'password': password
+            "email": email,
+            "username": username,
+            "password": password
         }
 
-        # Invoke the Lambda function
-        response = lambda_client.invoke(
-            FunctionName='registerUser',  # Replace with your Lambda function name
-            InvocationType='RequestResponse',
-            Payload=json.dumps(payload)
-        )
+        # Send the POST request to the API Gateway URL
+        response = requests.post(API_GATEWAY_URL, json=payload)
 
-        # Process the Lambda response
-        result = json.loads(response['Payload'].read())
-        if result['statusCode'] == 200:
-            return redirect(url_for('login'))  # Redirect to login page on success
+        # Process the response from API Gateway
+        if response.status_code == 200:
+            flash("Registration successful. Please log in.")
+            return redirect(url_for('login'))
         else:
-            error = json.loads(result['body'])  # Display error from Lambda
+            error = response.json().get("body", "An error occurred during registration")
 
     return render_template('register.html', error=error)
 
