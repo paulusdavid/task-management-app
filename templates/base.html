@@ -115,12 +115,14 @@
 
     <!-- Header section with conditional User, Subscription, Query, and Logout links -->
     <header>
-        <h1>Task Managmenet App</h1>
+        <h1>Task Management App</h1>
         <nav style="background-color: #333; padding: 10px; text-align: center;">
             <ul style="list-style: none; padding: 0; display: inline-block;">
                 {% if session.get('email') %}
                 <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('home') }}" style="color: white; text-decoration: none;">User</a></li>
                 <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('create_task') }}" style="color: white; text-decoration: none;">Create Task</a></li>
+                <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('view_tasks') }}" style="color: white; text-decoration: none;">View Tasks</a></li>
+                <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('profile') }}" style="color: white; text-decoration: none;">Profile</a></li>
                 <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('logout') }}" style="color: white; text-decoration: none;">Logout</a></li>
                 {% endif %}
                 <!-- Display user_name on the right side when logged in -->

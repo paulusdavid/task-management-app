@@ -1,0 +1,14 @@
+{% extends "base.html" %}
+
+{% block title %}Profile{% endblock %}
+
+{% block content %}
+<h1>Your Profile</h1>
+<p><strong>Username:</strong> {{ user_profile.user_name }}</p>
+<p><strong>Email:</strong> {{ user_profile.email }}</p>
+{% if user_profile.profile_picture %}
+<p><strong>Profile Picture:</strong></p>
+<img src="{{ user_profile.profile_picture }}" alt="Profile Picture" width="100">
+{% endif %}
+<a href="{{ url_for('update_profile') }}" class="btn btn-primary">Edit Profile</a>
+{% endblock %}
