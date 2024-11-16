@@ -8,12 +8,14 @@ from datetime import datetime
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
-s3 = boto3.client('s3')
 
 # Configure AWS credentials and region
 dynamodb = boto3.resource('dynamodb', region_name='ap-southeast-2')  
 login_table = dynamodb.Table('login-taskmanagement-a3')
 tasks_table = dynamodb.Table('tasksdata-taskmanagement-a3')
+
+s3_client = boto3.client('s3', region_name='ap-southeast-2')
+bucket_name = 'my-task-management-app-bucket-2024'
 
 # Initialize the Lambda client
 lambda_client = boto3.client('lambda', region_name='ap-southeast-2')
@@ -39,6 +41,7 @@ def login():
             # Set session for logged in user
             session['email'] = response['Item']['email']
             session['user_name'] = response['Item']['user_name']
+            session['profile_picture_url'] = response['Item']['profile_picture_url']
             return redirect(url_for('home'))  # Redirect to the home page
         else:
             error = "email or password is invalid"
@@ -207,23 +210,30 @@ def profile():
 
     # Fetch user profile data from your database (DynamoDB or wherever it is stored)
     user_profile = login_table.get_item(Key={'email': email}).get('Item')
+    session['profile_picture_url'] = user_profile.get('profile_picture_url', '')
 
     return render_template('profile.html', user_profile=user_profile)
 
 @app.route('/update_profile', methods=['GET', 'POST'])
 def update_profile():
-    if request.method == 'POST':
-        # Retrieve the new username from the form
-        new_username = request.form.get('username')
-        email = session.get('email')  
+    email = session.get('email')  # Retrieve email from session
 
-        # Update only the username in the database
+    if request.method == 'POST':
+        # Update user data
+        new_username = request.form.get('username')
+        selected_picture = request.form.get('profile_picture')
+
         try:
+            # Update the user's profile picture URL and username in DynamoDB
             login_table.update_item(
                 Key={'email': email},
-                UpdateExpression="SET user_name = :username",
-                ExpressionAttributeValues={':username': new_username}
+                UpdateExpression="SET user_name = :username, profile_picture_url = :profile_picture",
+                ExpressionAttributeValues={
+                    ':username': new_username,
+                    ':profile_picture': selected_picture
+                }
             )
+            session['profile_picture_url'] = selected_picture  # Update session with new picture URL
             flash('Profile updated successfully!', 'success')
         except Exception as e:
             flash('Error updating profile. Please try again.', 'error')
@@ -231,29 +241,31 @@ def update_profile():
 
         return redirect(url_for('profile'))
 
-    # Render the form with current user data for GET requests
-    email = session.get('email')
+    # If GET, retrieve the current user's data
     user_data = login_table.get_item(Key={'email': email}).get('Item')
-    return render_template('update_profile.html', user_name=user_data['user_name'], email=email)
 
-
-def upload_profile_picture(file, user_email):
-    bucket_name = login_table
-    # Generate a unique file name
-    file_name = f"profile-pictures/{user_email}-{uuid.uuid4()}.jpg"
-    
+    # Fetch all images from the S3 bucket
     try:
-        # Upload file to S3
-        s3.upload_fileobj(
-            file,
-            bucket_name,
-            file_name,
-            ExtraArgs={'ACL': 'private', 'ContentType': file.content_type}
-        )
-        return f"s3://{bucket_name}/{file_name}"
+        response = s3_client.list_objects_v2(Bucket=bucket_name, Prefix="profile-pictures/")
+        profile_pictures = [
+            f"https://dsbctnf3cdxgu.cloudfront.net/{obj['Key']}"  # Generate CloudFront URLs
+            for obj in response.get('Contents', [])
+            if obj['Key'].endswith(('.jpg', '.png', '.jpeg'))  # Filter for image files
+        ]
+        if not profile_pictures:
+            flash('No profile pictures found in the bucket.', 'info')
     except Exception as e:
-        print("Error uploading to S3:", e)
-        return None
+        flash('Error retrieving profile pictures from S3.', 'error')
+        print(e)
+        profile_pictures = []
+
+    return render_template(
+        'update_profile.html',
+        user_name=user_data['user_name'],
+        email=email,
+        profile_pictures=profile_pictures
+    )
+
 
 if __name__ == '__main__':
     app.run()

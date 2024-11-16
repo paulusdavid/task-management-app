@@ -14,6 +14,14 @@
             <label for="email">Email</label>
             <input type="email" class="form-control" id="email" name="email" value="{{ email }}" readonly>
         </div>
+        <div class="form-group">
+            <label for="profile_picture">Select Profile Picture</label>
+            <select class="form-control" id="profile_picture" name="profile_picture">
+                {% for image in profile_pictures %}
+                <option value="{{ image }}">{{ image }}</option>
+                {% endfor %}
+            </select>
+        </div>
         <button type="submit" class="btn btn-primary mt-2">Save Changes</button>
     </form>
 </div>
