@@ -96,7 +96,7 @@ def create_task():
         task_description = request.form['task_description']
         task_due_date = request.form['task_due_date']
         assigned_to = request.form['assigned_to']
-        task_status = "Pending"
+        task_status = "Incomplete"
         created_at = datetime.now().isoformat()
         
         task_id = str(uuid.uuid4())
@@ -178,6 +178,30 @@ def edit_task(task_id):
         return redirect(url_for('view_tasks'))
     
     return render_template('edit_task.html', task=task)
+
+@app.route('/toggle_task_status/<task_id>', methods=['POST'])
+def toggle_task_status(task_id):
+    email = session.get('email')  # Retrieve email from session
+    if not email:
+        flash('You need to be logged in to update task status.', 'error')
+        return redirect(url_for('login'))
+
+    # Get the new status from the form
+    new_status = request.form.get('new_status')
+
+    try:
+        # Update the task status in DynamoDB
+        tasks_table.update_item(
+            Key={'email': email, 'task_id': task_id},
+            UpdateExpression="SET task_status = :status",
+            ExpressionAttributeValues={':status': new_status}
+        )
+        flash('Task status updated successfully!', 'success')
+    except Exception as e:
+        print(e)
+        flash('Error updating task status. Please try again.', 'error')
+
+    return redirect(url_for('view_tasks'))
 
 @app.route('/view_tasks')
 def view_tasks():

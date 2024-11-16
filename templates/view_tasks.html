@@ -31,6 +31,17 @@
                 <form action="{{ url_for('delete_task', task_id=task.task_id) }}" method="post" style="display:inline;">
                     <button type="submit" class="btn btn-danger btn-sm">Delete</button>
                 </form>
+                {% if task.task_status == 'Complete' %}
+                <form action="{{ url_for('toggle_task_status', task_id=task.task_id) }}" method="post" style="display:inline;">
+                    <input type="hidden" name="new_status" value="Incomplete">
+                    <button type="submit" class="btn btn-warning btn-sm">Mark as Incomplete</button>
+                </form>
+                {% else %}
+                <form action="{{ url_for('toggle_task_status', task_id=task.task_id) }}" method="post" style="display:inline;">
+                    <input type="hidden" name="new_status" value="Complete">
+                    <button type="submit" class="btn btn-success btn-sm">Mark as Complete</button>
+                </form>
+                {% endif %}
             </td>
         </tr>
         {% endfor %}
