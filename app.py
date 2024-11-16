@@ -29,24 +29,37 @@ def index():
 def login():
     session.clear()
     error = None
+
     if request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
 
-        # Query DynamoDB to validate credentials
-        response = login_table.get_item(Key={'email': email})
+        try:
+            # Invoke the Lambda function
+            response = lambda_client.invoke(
+                FunctionName='login',
+                InvocationType='RequestResponse',
+                Payload=json.dumps({
+                    'body': json.dumps({'email': email, 'password': password})
+                })
+            )
 
-        # Check if the email exists and the password matches
-        if 'Item' in response and response['Item']['password'] == password:
-            # Set session for logged in user
-            session['email'] = response['Item']['email']
-            session['user_name'] = response['Item']['user_name']
-            session['profile_picture_url'] = response['Item']['profile_picture_url']
-            return redirect(url_for('home'))  # Redirect to the home page
-        else:
-            error = "email or password is invalid"
-    
+            # Parse the response from Lambda
+            response_payload = json.loads(response['Payload'].read())
+            if response_payload['statusCode'] == 200:
+                data = json.loads(response_payload['body'])
+                session['email'] = data['email']
+                session['user_name'] = data['user_name']
+                session['profile_picture_url'] = data['profile_picture_url']
+                return redirect(url_for('home'))
+            else:
+                error = json.loads(response_payload['body'])
+        except Exception as e:
+            print(f"Error invoking Lambda: {str(e)}")
+            error = "An error occurred. Please try again."
+
     return render_template('login.html', error=error)
+
 
 @app.route('/register', methods=['GET', 'POST'])
 def register():
