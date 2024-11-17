@@ -10,5 +10,6 @@
 <p><strong>Profile Picture:</strong></p>
 <img src="{{ user_profile.profile_picture_url }}" alt="Profile Picture" width="100">
 {% endif %}
+<p><strong>Failed Login Attempts(within the 5 minutes timeframe):</strong> {{ failed_login_attempts }}</p>
 <a href="{{ url_for('update_profile') }}" class="btn btn-primary">Edit Profile</a>
 {% endblock %}

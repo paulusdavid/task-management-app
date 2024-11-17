@@ -21,6 +21,30 @@ bucket_name = 'my-task-management-app-bucket-2024'
 lambda_client = boto3.client('lambda', region_name='ap-southeast-2')
 API_GATEWAY_URL = "https://6v6gcorg56.execute-api.ap-southeast-2.amazonaws.com/prod/register"
 
+def get_failed_login_attempts(email):
+    cloudwatch = boto3.client('cloudwatch', region_name='ap-southeast-2')
+    from datetime import datetime, timedelta
+
+    try:
+        response = cloudwatch.get_metric_statistics(
+            Namespace='TaskManagementApp',
+            MetricName='FailedLoginAttempts',
+            Dimensions=[
+                {'Name': 'User', 'Value': email}
+            ],
+            # Narrow the time range to the last 15 minutes
+            StartTime=datetime.utcnow() - timedelta(minutes=15),
+            EndTime=datetime.utcnow(),
+            Period=300,  # 5-minute aggregation
+            Statistics=['Sum']
+        )
+        failed_attempts = sum(dp['Sum'] for dp in response.get('Datapoints', []))
+        return failed_attempts
+    except Exception as e:
+        print(f"Error fetching metrics: {str(e)}")
+        return 0
+
+
 @app.route('/')
 def index():
     return redirect(url_for('login'))  # Redirect root to login page
@@ -241,6 +265,7 @@ def view_tasks():
 def profile():
     # Retrieve user's profile information
     email = session.get('email')
+
     if not email:
         flash('You need to be logged in to view your profile.', 'error')
         return redirect(url_for('login'))
@@ -249,7 +274,15 @@ def profile():
     user_profile = login_table.get_item(Key={'email': email}).get('Item')
     session['profile_picture_url'] = user_profile.get('profile_picture_url', '')
 
-    return render_template('profile.html', user_profile=user_profile)
+    # Fetch the number of failed login attempts from CloudWatch
+    failed_login_attempts = get_failed_login_attempts(email)
+
+    return render_template(
+        'profile.html',
+        user_profile=user_profile,
+        failed_login_attempts=failed_login_attempts
+    )
+
 
 @app.route('/update_profile', methods=['GET', 'POST'])
 def update_profile():
