@@ -109,6 +109,12 @@
             border-radius: 8px;
             margin-right: 1rem;
         }
+
+        table td div {
+            display: flex;
+            justify-content: space-between;
+            gap: 10px;
+        }
     </style>
 </head>
 <body>
@@ -119,7 +125,7 @@
         <nav style="background-color: #333; padding: 10px; text-align: center;">
             <ul style="list-style: none; padding: 0; display: inline-block;">
                 {% if session.get('email') %}
-                <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('home') }}" style="color: white; text-decoration: none;">User</a></li>
+                <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('home') }}" style="color: white; text-decoration: none;">Home</a></li>
                 <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('create_task') }}" style="color: white; text-decoration: none;">Create Task</a></li>
                 <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('view_tasks') }}" style="color: white; text-decoration: none;">View Tasks</a></li>
                 <li style="display: inline; margin: 0 10px;"><a href="{{ url_for('profile') }}" style="color: white; text-decoration: none;">Profile</a></li>

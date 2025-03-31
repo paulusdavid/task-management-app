@@ -3,8 +3,12 @@ import boto3
 import json
 import requests
 import uuid
-from botocore.exceptions import ClientError
+from botocore.exceptions import ClientError, BotoCoreError
 from datetime import datetime
+from google.oauth2.credentials import Credentials
+from google_auth_oauthlib.flow import InstalledAppFlow
+from googleapiclient.discovery import build
+import os
 
 app = Flask(__name__)
 app.secret_key = 'your_secret_key_here'
@@ -16,6 +20,7 @@ tasks_table = dynamodb.Table('tasksdata-taskmanagement-a3')
 
 s3_client = boto3.client('s3', region_name='ap-southeast-2')
 bucket_name = 'my-task-management-app-bucket-2024'
+credentials_path = os.path.join(os.path.dirname(__file__), 'credentials.json')
 
 # Initialize the Lambda client
 lambda_client = boto3.client('lambda', region_name='ap-southeast-2')
@@ -43,6 +48,86 @@ def get_failed_login_attempts(email):
     except Exception as e:
         print(f"Error fetching metrics: {str(e)}")
         return 0
+
+# Define scopes for Google Calendar API
+SCOPES = ['https://www.googleapis.com/auth/calendar']
+
+@app.route('/authorize_google')
+def authorize_google():
+    flow = InstalledAppFlow.from_client_secrets_file(
+        'credentials.json', SCOPES, redirect_uri=url_for('authorize_callback', _external=True)
+    )
+    authorization_url, _ = flow.authorization_url(prompt='consent')
+    return redirect(authorization_url)
+
+@app.route('/authorize_callback')
+def authorize_callback():
+    flow = InstalledAppFlow.from_client_secrets_file(
+        'credentials.json', SCOPES, redirect_uri=url_for('authorize_callback', _external=True)
+    )
+    flow.fetch_token(authorization_response=request.url)
+
+    creds = flow.credentials
+    session['credentials'] = {
+        'token': creds.token,
+        'refresh_token': creds.refresh_token,
+        'token_uri': creds.token_uri,
+        'client_id': creds.client_id,
+        'client_secret': creds.client_secret,
+        'scopes': creds.scopes
+    }
+    flash("Google account authorized successfully!", "success")
+    return redirect(url_for('view_tasks'))
+
+
+@app.route('/sync_task_to_calendar/<task_id>', methods=['POST'])
+def sync_task_to_calendar(task_id):
+    # Retrieve task details from DynamoDB
+    task = tasks_table.get_item(
+        Key={
+            'email': session.get('email'),
+            'task_id': task_id
+        }
+    ).get('Item')
+
+    if not task:
+        flash("Task not found!", "error")
+        return redirect(url_for('view_tasks'))
+
+    # Load credentials from session
+    credentials_data = session.get('credentials')
+    if not credentials_data:
+        flash("Please authorize your Google account first.", "error")
+        return redirect(url_for('authorize_google'))
+    
+    creds = Credentials.from_authorized_user_info(credentials_data, SCOPES)
+
+    # Build Google Calendar API service
+    service = build('calendar', 'v3', credentials=creds)
+
+    # Create event payload
+    event = {
+        'summary': task['task_name'],
+        'description': task['task_description'],
+        'start': {
+            'dateTime': f"{task['task_due_date']}T09:00:00",
+            'timeZone': 'UTC',
+        },
+        'end': {
+            'dateTime': f"{task['task_due_date']}T10:00:00",
+            'timeZone': 'UTC',
+        }
+    }
+
+    try:
+        # Insert event into Google Calendar
+        service.events().insert(calendarId='primary', body=event).execute()
+        flash("Task synced to Google Calendar successfully!", "success")
+    except Exception as e:
+        print(e)
+        flash("Failed to sync task to Google Calendar.", "error")
+
+    return redirect(url_for('view_tasks'))
 
 
 @app.route('/')
@@ -282,7 +367,6 @@ def profile():
         user_profile=user_profile,
         failed_login_attempts=failed_login_attempts
     )
-
 
 @app.route('/update_profile', methods=['GET', 'POST'])
 def update_profile():

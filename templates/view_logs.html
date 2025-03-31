@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>View Logs</title>
+</head>
+<body>
+    <h2>User Logs</h2>
+    {% if logs %}
+    <ul>
+        {% for log in logs %}
+        <li>{{ log }}</li>
+        {% endfor %}
+    </ul>
+    {% else %}
+    <p>No logs found for your email.</p>
+    {% endif %}
+</body>
+</html>
