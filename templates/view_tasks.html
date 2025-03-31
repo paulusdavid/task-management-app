@@ -3,62 +3,52 @@
 {% block title %}View Tasks{% endblock %}
 
 {% block content %}
-<div style="background: #ffffff; padding: 20px; border-radius: 8px; box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); max-width: 80%; margin: auto;">
-    <h2 style="color: #4CAF50; text-align: center;">Your Tasks</h2>
+<h2>Your Tasks</h2>
 
-    {% if tasks %}
-    <table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
-        <thead>
-            <tr>
-                <th style="padding: 10px; border-bottom: 1px solid #ddd;">Task Name</th>
-                <th style="padding: 10px; border-bottom: 1px solid #ddd;">Description</th>
-                <th style="padding: 10px; border-bottom: 1px solid #ddd;">Due Date</th>
-                <th style="padding: 10px; border-bottom: 1px solid #ddd;">Assigned To</th>
-                <th style="padding: 10px; border-bottom: 1px solid #ddd;">Status</th>
-                <th style="padding: 10px; border-bottom: 1px solid #ddd;">Created At</th>
-                <th style="padding: 10px; border-bottom: 1px solid #ddd;">Actions</th>
-                <th style="padding: 10px; border-bottom: 1px solid #ddd;">Sync</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for task in tasks %}
-            <tr>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.task_name }}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.task_description }}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.task_due_date }}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.assigned_to }}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.task_status }}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.created_at }}</td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">
-                    <div style="display: flex; flex-direction: column; gap: 10px;">
-                        <a href="{{ url_for('edit_task', task_id=task.task_id) }}" class="btn btn-primary btn-sm" style="width: 100%;">Edit</a>
-                        <form action="{{ url_for('delete_task', task_id=task.task_id) }}" method="post" style="display:inline;">
-                            <button type="submit" class="btn btn-danger btn-sm" style="width: 100%;">Delete</button>
-                        </form>
-                        {% if task.task_status == 'Complete' %}
-                        <form action="{{ url_for('toggle_task_status', task_id=task.task_id) }}" method="post" style="display:inline;">
-                            <input type="hidden" name="new_status" value="Incomplete">
-                            <button type="submit" class="btn btn-warning btn-sm" style="width: 100%;">Mark as Incomplete</button>
-                        </form>
-                        {% else %}
-                        <form action="{{ url_for('toggle_task_status', task_id=task.task_id) }}" method="post" style="display:inline;">
-                            <input type="hidden" name="new_status" value="Complete">
-                            <button type="submit" class="btn btn-success btn-sm" style="width: 100%;">Mark as Complete</button>
-                        </form>
-                        {% endif %}
-                    </div>
-                </td>
-                <td style="padding: 10px; border-bottom: 1px solid #ddd;">
-                    <form action="{{ url_for('sync_task_to_calendar', task_id=task.task_id) }}" method="post" style="display:inline;">
-                        <button type="submit" class="btn btn-info btn-sm" style="width: 100%;">Sync to Calendar</button>
-                    </form>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-    {% else %}
-    <p style="text-align: center;">No tasks found.</p>
-    {% endif %}
-</div>
+{% if tasks %}
+<table style="width: 100%; border-collapse: collapse; margin-top: 20px;">
+    <thead>
+        <tr>
+            <th style="padding: 10px; border-bottom: 1px solid #ddd;">Task Name</th>
+            <th style="padding: 10px; border-bottom: 1px solid #ddd;">Description</th>
+            <th style="padding: 10px; border-bottom: 1px solid #ddd;">Due Date</th>
+            <th style="padding: 10px; border-bottom: 1px solid #ddd;">Assigned To</th>
+            <th style="padding: 10px; border-bottom: 1px solid #ddd;">Status</th>
+            <th style="padding: 10px; border-bottom: 1px solid #ddd;">Created At</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for task in tasks %}
+        <tr>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.task_name }}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.task_description }}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.task_due_date }}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.assigned_to }}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.task_status }}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd;">{{ task.created_at }}</td>
+            <td style="padding: 10px; border-bottom: 1px solid #ddd;">
+                <a href="{{ url_for('edit_task', task_id=task.task_id) }}" class="btn btn-primary btn-sm">Edit</a>
+                <form action="{{ url_for('delete_task', task_id=task.task_id) }}" method="post" style="display:inline;">
+                    <button type="submit" class="btn btn-danger btn-sm">Delete</button>
+                </form>
+                {% if task.task_status == 'Complete' %}
+                <form action="{{ url_for('toggle_task_status', task_id=task.task_id) }}" method="post" style="display:inline;">
+                    <input type="hidden" name="new_status" value="Incomplete">
+                    <button type="submit" class="btn btn-warning btn-sm">Mark as Incomplete</button>
+                </form>
+                {% else %}
+                <form action="{{ url_for('toggle_task_status', task_id=task.task_id) }}" method="post" style="display:inline;">
+                    <input type="hidden" name="new_status" value="Complete">
+                    <button type="submit" class="btn btn-success btn-sm">Mark as Complete</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>No tasks found.</p>
+{% endif %}
+
 {% endblock %}
